@@ -1,0 +1,195 @@
+<aura:component controller='StudentsEventsManagement_Controller' implements="force:appHostable,flexipage:availableForAllPageTypes,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="GLOBAL">
+
+    <aura:attribute name="newEvent" type="Object" />
+    <aura:attribute name="newEventRecordId" type="String" />
+    <aura:attribute name="eventName" type="String" default="" />
+    <aura:attribute name="eventStartDate" type="DateTime" default="" />
+    <aura:attribute name="eventStartPrepTime" type="String" default="0.5 hrs" />
+    <aura:attribute name="eventEndDate" type="DateTime" default="" />
+    <aura:attribute name="eventEndPrepTime" type="String" default="0.5 hrs" />
+    <aura:attribute name="allowDonations" type="Boolean" default="false" />
+    <aura:attribute name="acceptDiscounts" type="Boolean" default="false" />
+    <aura:attribute name="allowDietSpecs" type="Boolean" default="false" />
+    <aura:attribute name="allowWaitlist" type="Boolean" default="false" />
+    <aura:attribute name="eventStatus" type="String" default="Under Approval" />
+    <aura:attribute name="eventTypes" type="String" default="" />
+    <aura:attribute name="eventCategory" type="String" default="New Student" />
+    <aura:attribute name="eventLocation" type="String" default="" />
+    <aura:attribute name="simpleNewEvent" type="Object" />
+    <aura:attribute name="newEventError" type="String" />
+    <aura:attribute name="timeIntervals" type="String[]" default="-" />
+    <aura:attribute name="stats" type="String[]" default="-" />
+    <aura:attribute name="categories" type="String[]" default="-" />
+    <aura:attribute name="types" type="String[]" default="-" />
+    <aura:attribute name="locations" type="String[]" default="-" />
+    <aura:attribute name="eventCreated" type="Boolean" default="false" />
+    <aura:attribute name="iFrameURL" type="String" default="" />
+
+    <style>
+        @media only screen and (max-width: 768px) {
+        #availableRoomFrame {
+            width: 90%;
+            }
+        }
+        .availableRoomFrame {
+            width: 90%;
+            height: 24rem;
+        }
+    </style>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <force:recordData aura:id="eventRecordCreator"
+                      layoutType="FULL"
+                      targetRecord="{!v.newEvent}"
+                      targetFields="{!v.simpleNewEvent}"
+                      targetError="{!v.newEventError}" />
+
+    <div class="slds-page-header createEventHeaderContainer" role="banner">
+        <p class="slds-text-heading--label createEventHeader">Create Event</p>
+    </div>
+
+    <!-- Display Lightning Data Service errors -->
+    <aura:if isTrue="{!not(empty(v.newEventError))}">
+        <div class="recordError slds-p-top_large">
+            <ui:message title="Error" severity="error" closable="true">
+                {!v.newEventError}
+            </ui:message>
+        </div>
+    </aura:if>
+
+    <div aura:id="eventsDetailsFormContainer" class="slds-form--horizontal slds-p-top_medium slds-p-right_medium eventsDetailsFormContainer" >
+        <!--<legend class="slds-form-element__label slds-text-title_caps">Information</legend>-->
+        <div class="slds-form-element" aura:id="nameForm">
+            <label class="slds-form-element__label" for="eventName">
+                <abbr class="slds-form-element__label slds-required" title="required">*</abbr>Name
+            </label>
+            <div class="slds-form-element__control">
+                <ui:inputText aura:id="eventName" class="slds-input" value="{!v.eventName}" />
+                <div class="slds-form-element__help slds-hide" aura:id="invalidName">This value is Required.</div>
+            </div>
+        </div>
+
+        <div class="slds-form-element" aura:id="startDateForm">
+          
+            <label class="slds-form-element__label" for="startDate">
+                <abbr class="slds-form-element__label slds-required" title="required">*</abbr>Start Date
+            </label>
+            <div class="slds-form-element__control">
+                <ui:inputDateTime aura:id="startDate" class="slds-input" displayDatePicker="true" value="{!v.eventStartDate}" />
+                <div class="slds-form-element__help slds-hide" aura:id="invalidStartDate">This value is Required.</div>
+                <div class="slds-form-element__help slds-hide "  aura:id="invalidStartDate2">Start Date can not be before Today's date.</div>
+            </div>
+           
+        </div>
+
+        <div class="slds-form-element" aura:id="startPrepTimeForm">
+            <label class="slds-form-element__label" for="eventStartPrepTime">
+                <abbr class="slds-form-element__label slds-required" title="required">*</abbr>Preparation Start Time
+            </label>
+            <lightning:select aura:id="eventStartPrepTime" class="slds-form-element__control" name="" label="" value="{!v.eventStartPrepTime}">
+                <aura:iteration items="{!v.timeIntervals}" var="timeIntVar">
+                    <option value="{!timeIntVar}" text="{!timeIntVar}"></option>
+                </aura:iteration>
+            </lightning:select>
+            <div class="slds-form-element__help slds-hide" aura:id="invalidStartPrepTime">This value is Required.</div>
+        </div>
+
+        <div class="slds-form-element" aura:id="endDateForm">
+            
+            <label class="slds-form-element__label" for="endDate">
+                <abbr class="slds-form-element__label slds-required" title="required">*</abbr>End Date
+            </label>
+            <div class="slds-form-element__control">
+                <ui:inputDateTime aura:id="endDate" class="slds-input" displayDatePicker="true"  value="{!v.eventEndDate}" />
+                <div class="slds-form-element__help slds-hide" aura:id="invalidEndDate">This value is Required.</div>
+                  <div class="slds-form-element__help slds-hide" aura:id="invalidEndDate3">End Date can not be before Today's date.</div>
+                <div class="slds-form-element__help slds-hide" aura:id="invalidEndDate2">End date can not be earlier than the Start date.</div>
+               
+            </div>
+                
+            
+           
+        </div>
+
+        <div class="slds-form-element" aura:id="endPrepTimeForm">
+            <label class="slds-form-element__label" for="eventEndPrepTime">
+                <abbr class="slds-form-element__label slds-required" title="required">*</abbr>Preparation End Time
+            </label>
+            <lightning:select aura:id="eventEndPrepTime" class="slds-form-element__control" name="" label="" value="{!v.eventEndPrepTime}">
+                <aura:iteration items="{!v.timeIntervals}" var="timeIntVar">
+                    <option value="{!timeIntVar}" text="{!timeIntVar}"></option>
+                </aura:iteration>
+            </lightning:select>
+            <div class="slds-form-element__help slds-hide" aura:id="invalidEndPrepTime">This value is Required.</div>
+        </div>
+
+        <fieldset class="slds-form-element">
+            <label class="slds-form-element__label">Mark Allowances</label>
+            <div class="slds-form-element__control" aura:id="allowancesSectionContainer">
+                <label class="slds-checkbox">
+                    <ui:inputCheckbox aura:id="allowDietSpecs" value="{!v.allowDietSpecs}" />
+                    <span class="slds-checkbox--faux" />
+                    <span class="slds-form-element__label">Allow Diet Specification</span>
+                </label>
+            </div>
+        </fieldset>
+
+        <div class="slds-form-element">
+            <label class="slds-form-element__label">Types</label>
+            <lightning:select aura:id="eventType" class="slds-form-element__control" name="" label="" value="{!v.eventTypes}">
+                <aura:iteration items="{!v.types}" var="typesVar">
+                    <option value="{!typesVar}" text="{!typesVar}"></option>
+                </aura:iteration>
+            </lightning:select>
+        </div>
+
+        <div class="slds-form-element">
+            <label class="slds-form-element__label">Location</label>
+            <lightning:select aura:id="eventLocation" class="slds-form-element__control" name="" label="" value="{!v.eventLocation}">
+                <aura:iteration items="{!v.locations}" var="locationsVar">
+                    <option value="{!locationsVar}" text="{!locationsVar}"></option>
+                </aura:iteration>
+            </lightning:select>
+        </div>
+
+        <div class="slds-form-element">
+            <label class="slds-form-element__label">Category</label>
+            <div class="slds-form-element__control">
+                <span class="slds-form-element__label">Student Event</span>
+            </div>
+        </div>
+
+        <lightning:button aura:id="checkRoomBtn" class="slds-m-top_medium" variant="brand" label="Create Event &amp; Check Rooms" iconName="utility:chevronright" iconPosition="right" onclick="{! c.checkRoomBtnClicked }" />
+        <lightning:button aura:id="saveEventAndCheckRoomBtn" class="slds-m-top_medium slds-hide" variant="brand" label="Update Event &amp; Check Rooms" iconName="utility:chevronright" iconPosition="right" onclick="{! c.checkRoomBtnClicked }" />
+        <br />
+
+    </div>
+
+    <div class="slds-form--horizontal slds-p-top_medium slds-p-right_medium slds-align_right editEventsBtnContainer" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <div aura:id="eventDMLSuccessMessageContainer" class="slds-notify eventDMLSuccessMessageContainer slds-notify--alert slds-hide" role="alert">
+            <span class="slds-assistive-text">Success</span>
+            <div class="slds-notify__content slds-grid">
+                <div class="slds-col" style="display: inline-block; float: left;">
+                    <h2 class="slds-section__title slds-m-top_small">Event Created and Submitted For Approval.</h2>
+                </div>
+            </div>
+        </div>
+
+        <div aura:id="eventDMLErrorMessageContainer" class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-hide" role="alert">
+            <span class="slds-assistive-text">Error</span>
+            <div class="slds-notify__content slds-grid">
+                <div class="slds-col" style="display: inline-block; float: left;">
+                    <h2 class="slds-section__title slds-m-top_small">Something went wrong. Event Not Created!</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div aura:id="roomSectionContainer" class="slds-hidden roomSectionContainer slds-m-top_small">
+        <iframe class="slds-p-top_large availableRoomFrame" src="{!v.iFrameURL}" id="availableRoomFrame" frameBorder="0" />
+    </div>
+
+    <lightning:button aura:id="eventListBtn" class="slds-hide slds-m-top_medium" variant="brand" label="List of Events" iconName="utility:chevronright" iconPosition="right" onclick="{! c.eventsListBtnClicked }" />
+
+</aura:component>
